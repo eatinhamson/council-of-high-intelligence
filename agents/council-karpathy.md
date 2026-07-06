@@ -10,7 +10,7 @@ council:
   polarity: "How models actually learn and fail"
   polarity_pairs: ["sutskever", "ada", "taleb"]
   triads: ["ai", "ai-product"]
-  duo_keywords: ["ai", "ml", "neural", "model", "training"]
+  duo_keywords: ["ai", "ml", "neural", "model", "training", "risk", "uncertainty", "fragility", "tail"]
   profiles: ["classic", "exploration-orthogonal"]
   provider_affinity: ["openai", "anthropic"]
 ---

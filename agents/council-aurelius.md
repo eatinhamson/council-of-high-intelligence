@@ -9,7 +9,7 @@ council:
   domain: "Resilience & moral clarity"
   polarity: "Control vs acceptance"
   polarity_pairs: ["sun-tzu"]
-  triads: ["strategy", "ethics", "conflict", "risk", "decision"]
+  triads: ["strategy", "ethics", "conflict", "risk", "ai-safety", "decision"]
   duo_keywords: ["strategy", "competition", "market"]
   profiles: ["classic", "exploration-orthogonal", "execution-lean"]
   provider_affinity: ["anthropic"]

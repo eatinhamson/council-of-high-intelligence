@@ -10,7 +10,7 @@ council:
   polarity: "Ship it or shut up"
   polarity_pairs: ["watts", "musashi", "meadows"]
   triads: ["shipping", "product", "founder", "ai-product", "design"]
-  duo_keywords: ["shipping", "execution", "release", "engineering", "theory", "pragmatism"]
+  duo_keywords: ["shipping", "execution", "release", "engineering", "theory", "pragmatism", "systems", "feedback", "complexity", "loops"]
   profiles: ["classic", "exploration-orthogonal", "execution-lean"]
   provider_affinity: ["openai", "anthropic"]
 ---

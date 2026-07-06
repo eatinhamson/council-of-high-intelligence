@@ -10,7 +10,7 @@ council:
   polarity: "When capability becomes risk"
   polarity_pairs: ["karpathy", "machiavelli"]
   triads: ["ai", "ai-safety", "uncertainty"]
-  duo_keywords: ["ai-safety", "alignment", "risk"]
+  duo_keywords: ["ai-safety", "alignment", "risk", "ai", "ml", "neural", "model", "training"]
   profiles: ["classic", "exploration-orthogonal"]
   provider_affinity: ["anthropic", "openai", "google"]
 ---

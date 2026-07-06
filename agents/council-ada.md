@@ -10,7 +10,7 @@ council:
   polarity: "What can/can't be mechanized"
   polarity_pairs: ["machiavelli", "karpathy", "rams"]
   triads: ["architecture", "debugging", "innovation", "complexity", "ai"]
-  duo_keywords: ["formalization", "systems", "abstraction"]
+  duo_keywords: ["formalization", "systems", "abstraction", "design", "user", "usability", "ux"]
   profiles: ["classic", "exploration-orthogonal", "execution-lean"]
   provider_affinity: ["openai", "anthropic"]
 ---

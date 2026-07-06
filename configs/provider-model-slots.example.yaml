@@ -15,19 +15,19 @@ seats:
     reasoning_mode: analytical
   feynman:
     provider: openai
-    model: gpt-5
+    model: gpt-5.4
     reasoning_mode: mechanistic
   sun-tzu:
     provider: google
     model: gemini-2.5-pro
     reasoning_mode: strategic
   machiavelli:
-    provider: xai
-    model: grok-4
+    provider: ollama
+    model: null
     reasoning_mode: adversarial
   ada:
     provider: openai
-    model: o3
+    model: gpt-5.4
     reasoning_mode: formal
   lao-tzu:
     provider: anthropic
@@ -39,9 +39,9 @@ seats:
     reasoning_mode: normative
   torvalds:
     provider: openai
-    model: gpt-5-mini
+    model: gpt-5.4
     reasoning_mode: pragmatic
 
 fallback:
   provider: openai
-  model: gpt-5-mini
+  model: gpt-5.4

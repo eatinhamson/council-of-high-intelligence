@@ -10,8 +10,8 @@ council:
   polarity: "Classifies everything"
   polarity_pairs: ["lao-tzu", "munger"]
   triads: ["architecture", "innovation", "complexity", "systems"]
-  duo_keywords: ["architecture", "structure", "categories"]
-  profiles: ["classic", "exploration-orthogonal"]
+  duo_keywords: ["architecture", "structure", "categories", "economics", "investment", "models", "moat"]
+  profiles: ["classic"]
   provider_affinity: ["anthropic", "openai", "google"]
 ---
 

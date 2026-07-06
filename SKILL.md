@@ -28,7 +28,7 @@ You are the Council Coordinator. Your job is to convene the right council member
 |------|--------|
 | `--full` | All 18 members |
 | `--triad [domain]` | Predefined 3-member combination |
-| `--members name1,name2,...` | Manual selection (2-11) |
+| `--members name1,name2,...` | Manual selection (2-18) |
 | `--profile [name]` | Panel profile: `classic`, `exploration-orthogonal`, `execution-lean` |
 | `--quick` | Fast 2-round mode (200-word analysis → 75-word position, no cross-examination) |
 | `--duo` | 2-member dialectic using polarity pairs |
@@ -126,7 +126,7 @@ Flag priority: `--quick` / `--duo` set the mode. `--full` / `--triad` / `--membe
 ## Council Profiles
 
 ### `classic` (default)
-All 11 members with the domain triads above.
+All 18 members with the domain triads above.
 
 ### `exploration-orthogonal`
 12-member panel for discovery and "unknown unknowns" reduction.
@@ -497,7 +497,6 @@ Use the Duo Verdict template below.
 
 ### Provider Routing
 {Routing table: member → provider → model. Note any fallbacks triggered. If single-provider (Claude-only): "Default models (single provider)."}
-
 
 ### Unresolved Questions
 {Questions the council could not answer — inputs needed from user. Lead with what the council does NOT know.}
