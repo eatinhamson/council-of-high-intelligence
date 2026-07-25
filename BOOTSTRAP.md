@@ -14,7 +14,7 @@ Google (`gemini`), and Ollama for genuine model diversity.
 ## Setup (this machine)
 
 ```bash
-cd ~/Development/council-of-high-intelligence
+cd ~"/Vault Keeper/Tooling/council-of-high-intelligence"
 ./install.sh --dry-run     # preview
 ./install.sh               # installs 18 agents -> ~/.claude/agents/
                            #          skill     -> ~/.claude/skills/council/SKILL.md
