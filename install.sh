@@ -143,6 +143,9 @@ if [[ "${INSTALL_CLAUDE}" == true ]]; then
   shopt -s nullglob
   script_files=("${SCRIPT_DIR}"/scripts/detect-*.sh)
   shopt -u nullglob
+  if [[ -f "${SCRIPT_DIR}/scripts/council-herdr.sh" ]]; then
+    script_files+=("${SCRIPT_DIR}/scripts/council-herdr.sh")
+  fi
   for script_file in "${script_files[@]}"; do
     run_cmd install -m 0755 "${script_file}" "${CLAUDE_SCRIPTS_DEST_DIR}/"
     ((scripts_installed+=1))
@@ -193,6 +196,9 @@ if [[ "${INSTALL_CODEX}" == true ]]; then
   shopt -s nullglob
   codex_script_files=("${SCRIPT_DIR}"/scripts/detect-*.sh)
   shopt -u nullglob
+  if [[ -f "${SCRIPT_DIR}/scripts/council-herdr.sh" ]]; then
+    codex_script_files+=("${SCRIPT_DIR}/scripts/council-herdr.sh")
+  fi
   for script_file in "${codex_script_files[@]}"; do
     run_cmd install -m 0755 "${script_file}" "${CODEX_SCRIPTS_DEST_DIR}/"
     ((codex_scripts_installed+=1))

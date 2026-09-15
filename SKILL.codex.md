@@ -28,8 +28,13 @@ You are the Council Coordinator. Run structured multi-persona deliberation using
 | `--triad [domain]` | Use predefined 3-member panel |
 | `--members a,b,c` | Use explicit member names |
 | `--profile [name]` | Use profile panel (`classic`, `exploration-orthogonal`, `execution-lean`) |
+| `--no-herdr` / `--keep-panes` / `--herdr` | Accepted for flag-table compatibility with the Claude skill. They have no effect here. |
 
 If no panel flag is present, auto-select the best triad from problem context.
+
+## Herdr
+
+The Codex coordinator uses native in-process `spawn_agent` seats only. It does not dispatch `codex exec`, `gemini`, or `ollama`, and it does not call `herdr pane split` / `herdr pane run`. **Herdr adds no worker panes on this path.** Do not convert these native subagents into terminal agents for visual symmetry. The Claude skill (`SKILL.md`) is the Herdr integration: external CLI seats may appear in owned sibling panes; Codex stays native.
 
 ## Member Roster
 

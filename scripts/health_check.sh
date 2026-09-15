@@ -26,6 +26,18 @@ done
   && pass "detect-providers.sh executable" \
   || fail "detect-providers.sh missing or not executable"
 
+[[ -x scripts/council-herdr.sh ]] \
+  && pass "council-herdr.sh executable" \
+  || fail "council-herdr.sh missing or not executable"
+
+[[ -x tests/test-council-herdr.sh ]] \
+  && pass "test-council-herdr.sh executable" \
+  || fail "test-council-herdr.sh missing or not executable"
+
+grep -q -- "--no-herdr" SKILL.md && grep -q -- "--keep-panes" SKILL.md \
+  && pass "Herdr flags documented in SKILL.md" \
+  || fail "Herdr flags missing from SKILL.md"
+
 # --- Agent roster ---
 agent_count=$(find agents -maxdepth 1 -name 'council-*.md' 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$agent_count" -eq 18 ]]; then
@@ -91,6 +103,10 @@ else
   [[ -x "$detect_installed" ]] \
     && pass "Installed detect-providers.sh present (needed by SKILL.md Step 1)" \
     || warn "Installed detect script missing at ${detect_installed} — auto-routing will fail"
+  herdr_installed="${CLAUDE_DIR}/skills/council/scripts/council-herdr.sh"
+  [[ -x "$herdr_installed" ]] \
+    && pass "Installed council-herdr.sh present (needed by SKILL.md Herdr dispatch)" \
+    || warn "Installed council-herdr.sh missing at ${herdr_installed} — Herdr multiplexing will fail"
 fi
 
 echo

@@ -20,6 +20,8 @@ You are the Council Coordinator. Your job is to convene the right council member
 /council --duo Should we use microservices or monolith?
 /council --duo --members torvalds,ada Is this abstraction worth it?
 /council --models configs/provider-model-slots.example.yaml --full Evaluate our roadmap
+/council --no-herdr --triad architecture Should we use a monorepo?
+/council --keep-panes --quick Should we add caching here?
 ```
 
 ## Flags
@@ -34,9 +36,12 @@ You are the Council Coordinator. Your job is to convene the right council member
 | `--duo` | 2-member dialectic using polarity pairs |
 | `--models [path]` | Manual provider/model slot mapping (overrides auto-routing) |
 | `--no-auto-route` | Disable auto-routing; use agent frontmatter defaults (Claude-only) |
-| `--dry-route` | Print the routing table without running the council |
+| `--dry-route` | Print the routing table without running the council. Never execute seats or create panes. |
+| `--no-herdr` | Disable Herdr worker panes; run external CLIs on the existing local path |
+| `--keep-panes` | Keep successful Herdr worker panes for visual inspection |
+| `--herdr` | Force Herdr when `herdr` and `jq` are available (tests). Normal Herdr sessions do not need this. |
 
-Flag priority: `--quick` / `--duo` set the mode. `--full` / `--triad` / `--members` / `--profile` set the panel. `--models` overrides auto-routing. `--no-auto-route` and `--dry-route` are additive.
+Flag priority: `--quick` / `--duo` set the mode. `--full` / `--triad` / `--members` / `--profile` set the panel. `--models` overrides auto-routing. `--no-auto-route`, `--dry-route`, `--no-herdr`, `--keep-panes`, and `--herdr` are additive. `--dry-route` always wins over Herdr: print the table and stop.
 
 ---
 
@@ -160,8 +165,8 @@ Follow these steps in order. Do NOT skip steps or merge rounds.
 ### STEP 0: Parse Mode and Select Panel
 
 **Determine mode:**
-- If `--quick` → QUICK MODE (skip to Quick Mode Sequence below)
-- If `--duo` → DUO MODE (skip to Duo Mode Sequence below)
+- If `--quick` → QUICK MODE (still run STEP 1 routing and STEP 1.4 begin, then skip to Quick Mode Sequence)
+- If `--duo` → DUO MODE (still run STEP 1 routing and STEP 1.4 begin, then skip to Duo Mode Sequence)
 - Otherwise → FULL MODE (continue here)
 
 **Select panel members:**
@@ -186,7 +191,7 @@ Follow these steps in order. Do NOT skip steps or merge rounds.
 
 **Path B — Auto-routing** (default when no `--models` and no `--no-auto-route`):
 1. Run the detection script via Bash: `bash ~/.claude/skills/council/scripts/detect-providers.sh`
-2. Parse the JSON output. If `provider_count == 1` (only anthropic): skip routing entirely, use agent frontmatter defaults. Proceed to Step 1.5.
+2. Parse the JSON output. If `provider_count == 1` (only anthropic): skip routing entirely, use agent frontmatter defaults. Proceed to Step 1.4 (run directory; native seats still need it) then 1.5.
 3. If `provider_count >= 2`: apply the routing algorithm below.
 4. If `--dry-route`: print the routing table and stop (do not convene the council).
 
@@ -199,13 +204,36 @@ Follow these steps in order. Do NOT skip steps or merge rounds.
 **Path C — No routing** (`--no-auto-route`):
 Use agent frontmatter `model` defaults (Claude-only). Skip detection entirely.
 
-`[CHECKPOINT]` State the routing table: member → provider → model → exec_method. If `--dry-route`, output the table and stop here.
+`[CHECKPOINT]` State the routing table: member → provider → model → exec_method. If `--dry-route`, output the table and stop here. Do not call `council-herdr.sh start` and do not create panes.
+
+### STEP 1.4: Herdr run directory (external CLI seats only)
+
+Herdr is the visibility and lifecycle layer, not the worker transport. Native `subagent` seats stay in-process — never replace them with `herdr agent start`. Rounds still exchange coordinator-produced artifacts; pane reuse is not model-session continuity.
+
+Resolve the helper at `~/.claude/skills/council/scripts/council-herdr.sh` (installed by `install.sh`; repo copy: `scripts/council-herdr.sh`).
+
+**Activation:** use Herdr automatically when `HERDR_ENV=1` and `herdr` + `jq` are on `PATH`, unless `--no-herdr` or `--dry-route`. `--herdr` forces that attempt when the binaries exist. If Herdr is unavailable, keep the existing local CLI path.
+
+If this is not `--dry-route`, begin one private run directory (mode `0700`) for the invocation:
+
+```bash
+HELPER="${HOME}/.claude/skills/council/scripts/council-herdr.sh"
+BEGIN_ARGS=()
+# pass --keep-panes / --no-herdr / --herdr when the user supplied them
+# never pass --dry-route into start; --dry-route already stopped above
+RUN_JSON="$(bash "$HELPER" begin "${BEGIN_ARGS[@]}")"
+RUN="$(printf '%s' "$RUN_JSON" | jq -r .run_dir)"
+```
+
+Keep the coordinator in its current pane. The helper creates only owned sibling panes (`herdr pane split --current --cwd --no-focus`), parses `.result.pane.pane_id` from JSON, caps visible worker panes at four, and waves extra external seats through that pool (alternating right/down). It never creates a workspace or tab and never closes a pre-existing pane.
 
 ### STEP 1.5: Problem Restate Gate
 
 Before any analysis begins, each member must restate the problem. This catches wrong-question failures before burning rounds on them.
 
-Spawn each member in parallel with:
+Dispatch each member using the same exec_method rules as STEP 2 (helper for external CLI seats; native `subagent` otherwise). Run them in parallel. Use `--round restate` — never reuse a later analysis round id, or a leftover sentinel will be harvested against an empty result.
+
+Prompt:
 ```
 Read your agent definition at ~/.claude/agents/council-{name}.md.
 
@@ -230,36 +258,53 @@ Run all members **IN PARALLEL**. Each member sees ONLY the problem statement (bl
 
 **Dispatch by exec_method** (from routing table):
 
-**For `subagent` (Anthropic)** — spawn as Claude Code subagent:
+**For `subagent` (Anthropic)** — spawn as Claude Code subagent (native, no Herdr pane):
 - Use `subagent_type` matching the council member's agent name (agents are in ~/.claude/agents/)
 - Use the `model` parameter from the routing table (opus/sonnet/haiku) to override the agent's default if needed
-
-**For `codex_exec` (OpenAI)** — run via Bash tool:
-1. Read the member's agent file at `~/.claude/agents/council-{name}.md`
-2. Extract the **Identity**, **Grounding Protocol**, and relevant **Output Format** sections (trimmed — skip Analytical Method, What You See/Miss, When Deliberating)
-3. Build the full prompt with identity inlined, then run:
+- Record the native seat with the helper so it creates no worker pane:
 ```bash
-codex exec -c model="{model}" -c auto_approve=true "{full prompt}" 2>/dev/null
+bash "$HELPER" start "$RUN" --seat "{name}" --round 1 --timeout 60 --native
 ```
-4. Capture stdout as the member's output. Timeout: 60 seconds.
 
-**For `gemini_cli` (Google)** — run via Bash tool:
-1. Read and extract identity sections (same as codex_exec above)
-2. Run:
+**Round IDs** — never reuse the same `--round` for a later dispatch of the same seat. Restate uses `restate`. Full/quick/duo analysis rounds use `1`, `2`, `3`. The helper unlinks a leftover sentinel on start, but a distinct round id is still required so artifacts do not collide.
+
+**For external CLI seats** (`codex_exec`, `gemini_cli`, `ollama_run`) — same argv as the non-Herdr path, run through the helper. Write the prompt to `$RUN/prompts/{name}_{round}.txt`. Do not type the prompt or a long command into a pane.
+
+You may `start` seats in parallel. The helper serializes pane allocation (run-dir lock) so the 4-pane cap and wave reuse still hold.
+
 ```bash
-gemini -m {model} -p "{full prompt}" 2>/dev/null
-```
-3. Capture stdout. Timeout: 60 seconds.
+# Timeouts: codex_exec / gemini_cli = 60s; ollama_run = 120s
+# Restate gate: --round restate. Round 1 analysis: --round 1. Round 2/3: 2 / 3.
+PROMPT="$RUN/prompts/{name}_{round}.txt"
+# write the full prompt (identity inlined for external providers) to $PROMPT
 
-**For `ollama_run` (Ollama)** — run via Bash tool:
-1. Read and extract identity sections (same as above)
-2. Run:
+# OpenAI
+bash "$HELPER" start "$RUN" --seat "{name}" --round 1 --timeout 60 --prompt-file "$PROMPT" -- \
+  codex exec -c model="{model}" -c auto_approve=true
+
+# Google
+bash "$HELPER" start "$RUN" --seat "{name}" --round 1 --timeout 60 --prompt-file "$PROMPT" -- \
+  gemini -m {model} -p
+
+# Ollama
+bash "$HELPER" start "$RUN" --seat "{name}" --round 1 --timeout 120 --prompt-file "$PROMPT" -- \
+  ollama run {model}
+```
+
+Start every external seat in the round (the helper waves through a 4-pane pool), then:
+
 ```bash
-ollama run {model} "{full prompt}" 2>/dev/null
+bash "$HELPER" wait-all "$RUN"
+# Ingest from the result file. Never scrape pane scrollback or treat Herdr idle/done as completion.
+MEMBER_OUTPUT="$(bash "$HELPER" ingest "$RUN" --seat "{name}" --round 1)"
+bash "$HELPER" close-success "$RUN"
 ```
-3. Capture stdout. Timeout: 120 seconds (local models are slower).
 
-**Fallback**: If any external provider call fails or times out, log `[FALLBACK] {member} failed on {provider}/{model}. Falling back to anthropic/{frontmatter_model}.` and re-run as a Claude subagent. Skip the failed provider for remaining rounds.
+The helper writes a short `run_{seat}_{round}.zsh` wrapper (`set -o pipefail`), runs `herdr pane run <id> "source <wrapper>"` when Herdr is active, and completes on an atomic sentinel (`exit_code`, `result`, `seat`, `round`) renamed into place. Success is exit 0 plus a readable non-empty result file. A missing sentinel at the deadline, a nonzero sentinel, or a missing/empty result is a failed leg.
+
+If Herdr setup fails before any worker starts, the helper closes only empty panes from that attempt and falls back to the local CLI path automatically. `--keep-panes` skips closing successful owned panes. Failed and timed-out panes and all run artifacts are preserved. Never close a pane merely because Herdr reports `idle` or `done`.
+
+**Fallback**: If any external provider call fails or times out, inspect the owned pane only for diagnosis, log `[FALLBACK] {member} failed on {provider}/{model}. Falling back to anthropic/{frontmatter_model}.`, and re-run as a Claude subagent (native). Skip the failed provider for remaining rounds. Record the seat degraded/offline if that recovery fails.
 
 **Prompt template** (used for ALL providers — for external providers, inline the identity preamble):
 ```
@@ -278,7 +323,7 @@ Do NOT try to anticipate what other members will say.
 Limit: 400 words maximum.
 ```
 
-**Note**: The same dispatch logic applies to all subsequent rounds (Steps 3 and 5). Use the routing table from Step 1 consistently. If a provider failed and fell back in an earlier round, use the fallback provider for all remaining rounds.
+**Note**: The same dispatch logic applies to all subsequent rounds (Steps 3 and 5). Use `--round 2` and `--round 3` respectively. Use the routing table from Step 1 consistently. If a provider failed and fell back in an earlier round, use the fallback provider for all remaining rounds.
 
 `[CHECKPOINT]` Confirm all Round 1 outputs collected. Verify each is ≤400 words and follows the member's Output Format.
 
@@ -370,7 +415,7 @@ Fast 2-round deliberation for simpler questions. No cross-examination.
 
 ### QUICK STEP 0: Select Panel
 
-Same panel selection as full mode Step 0. If no panel specified, default to best-matching triad via auto-selection.
+Same panel selection as full mode Step 0. If no panel specified, default to best-matching triad via auto-selection. Then run STEP 1 routing and STEP 1.4 helper `begin` (unless `--dry-route`, which already stopped).
 
 `[CHECKPOINT]` State selected members.
 
@@ -383,7 +428,7 @@ Each member restates the problem before analysis. In quick mode, this is embedde
 Emit to user:
 > **Quick council convened**: {member names}. Rapid analysis.
 
-Spawn all members in parallel with:
+Dispatch all members in parallel using STEP 2 exec_method / helper rules. Prompt:
 ```
 You are operating as a council member in a rapid deliberation.
 Read your agent definition at ~/.claude/agents/council-{name}.md and follow it precisely.
@@ -431,7 +476,7 @@ Two-member dialectic for rapid opposing perspectives.
 2. Otherwise → match problem against Duo Polarity Pairs table above, select the best-fitting pair
 3. State the selected pair and the tension they represent
 
-`[CHECKPOINT]` State selected pair and tension.
+`[CHECKPOINT]` State selected pair and tension. Then run STEP 1 routing and STEP 1.4 helper `begin` (unless `--dry-route`, which already stopped).
 
 ### DUO STEP 0.5: Problem Restate Gate
 
@@ -442,7 +487,7 @@ Each member restates the problem before analysis. In duo mode, this is embedded 
 Emit to user:
 > **Duo convened**: {member A} vs {member B} — {tension description}.
 
-Spawn both members in parallel:
+Dispatch both members in parallel using STEP 2 exec_method / helper rules. Prompt:
 ```
 You are operating as one half of a structured dialectic with one opponent.
 Read your agent definition at ~/.claude/agents/council-{name}.md and follow it precisely.

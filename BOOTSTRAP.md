@@ -1,15 +1,17 @@
 # BOOTSTRAP — Local Setup & Operations
 
 > Local usage notes for this clone of [0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence).
-> This is an **upstream clone with local patches** — upstream docs (README.md, SKILL.md, CONTRIBUTING.md) are left as-is.
-> See README.md for the full project docs; this file covers what's specific to running it here.
+> This is an **upstream clone with local patches**. README.md and SKILL.md in this tree include
+> the local Herdr helper and flags; do not assume they match upstream `origin/main`.
+> See README.md for the project docs; this file covers what's specific to running it here.
 
 ## What this is
 
-A Claude Code / Codex **skill + agent pack** (prompt engineering, no application code): the `/council`
+A Claude Code / Codex **skill + agent pack** with a small Herdr helper: the `/council`
 slash command convenes 3–18 historical-thinker personas (defined in `agents/council-*.md`) for
 structured multi-round deliberation, optionally routing members across Anthropic, OpenAI (`codex`),
-Google (`gemini`), and Ollama for genuine model diversity.
+Google (`gemini`), and Ollama. Claude external CLI seats can run in owned Herdr panes via
+`scripts/council-herdr.sh`; native subagents and the Codex skill stay in-process.
 
 ## Setup (this machine)
 
@@ -18,15 +20,16 @@ cd ~"/Vault Keeper/Tooling/council-of-high-intelligence"
 ./install.sh --dry-run     # preview
 ./install.sh               # installs 18 agents -> ~/.claude/agents/
                            #          skill     -> ~/.claude/skills/council/SKILL.md
-                           #          detect script -> ~/.claude/skills/council/scripts/
+                           #          detect + council-herdr helpers -> ~/.claude/skills/council/scripts/
 ./install.sh --codex       # optionally also install the Codex skill -> ~/.codex/skills/council/
 ```
 
 Restart Claude Code afterwards, then: `/council --quick Should we add caching here?`
 
-**No `.env` file is needed.** This project reads no environment variables and stores no API keys —
-external providers authenticate through their own CLIs (`codex`, `gemini`, `ollama`). That is why
-there is no `.env.example` here.
+**No `.env` file is needed.** External providers authenticate through their own CLIs
+(`codex`, `gemini`, `ollama`). `HERDR_ENV=1` is injected by Herdr when the coordinator
+already runs inside a Herdr pane; it is not a project secret. `--no-herdr` disables
+pane creation. `--dry-route` never creates panes.
 
 ## Health check
 
@@ -84,6 +87,8 @@ and the patches can't be lost to a stray `git checkout -- .`.
 | `agents/council-*.md` | 18 persona definitions with routing frontmatter |
 | `install.sh` | Installer (`--dry-run`, `--codex`, `--copy-configs`) |
 | `scripts/detect-providers.sh` | Provider probe, emits JSON (used by SKILL.md Step 1) |
+| `scripts/council-herdr.sh` | Herdr pane pool, wrappers, atomic sentinels (Claude external seats) |
+| `tests/test-council-herdr.sh` | Fake-Herdr behavioral tests for the helper |
 | `scripts/council-simulation-checklist.sh` | Upstream validation suite |
 | `scripts/health_check.sh` | Local read-only health check |
 | `configs/` | Auto-route tier defaults + manual seat-mapping example |

@@ -141,6 +141,30 @@ pass "--no-auto-route flag documented in SKILL.md"
 grep -q -- "--dry-route" SKILL.md || fail "--dry-route flag missing in SKILL.md"
 pass "--dry-route flag documented in SKILL.md"
 
+grep -q -- "--no-herdr" SKILL.md || fail "--no-herdr flag missing in SKILL.md"
+pass "--no-herdr flag documented in SKILL.md"
+
+grep -q -- "--keep-panes" SKILL.md || fail "--keep-panes flag missing in SKILL.md"
+pass "--keep-panes flag documented in SKILL.md"
+
+grep -q -- "--round restate" SKILL.md || fail "--round restate missing in SKILL.md"
+pass "--round restate documented in SKILL.md"
+
+[[ -f "scripts/council-herdr.sh" ]] || fail "scripts/council-herdr.sh is missing"
+[[ -x "scripts/council-herdr.sh" ]] || fail "scripts/council-herdr.sh is not executable"
+pass "council-herdr.sh exists and is executable"
+
+grep -q "council-herdr.sh" SKILL.md || fail "SKILL.md does not reference council-herdr.sh"
+pass "SKILL.md references council-herdr.sh"
+
+grep -q "native in-process" SKILL.codex.md || grep -q "Herdr adds no worker panes" SKILL.codex.md \
+  || fail "SKILL.codex.md does not state that Codex remains native (no Herdr worker panes)"
+pass "SKILL.codex.md states Codex path stays native"
+
+[[ -f "tests/test-council-herdr.sh" ]] || fail "tests/test-council-herdr.sh is missing"
+[[ -x "tests/test-council-herdr.sh" ]] || fail "tests/test-council-herdr.sh is not executable"
+pass "Herdr behavioral tests exist"
+
 affinity_count=0
 for agent_file in agents/council-*.md; do
   if grep -q "provider_affinity" "$agent_file" 2>/dev/null; then
@@ -168,6 +192,9 @@ pass "install.sh --dry-run completed"
 grep -q "Installed .* council agents" /tmp/council-install-dry-run.log || fail "install dry-run output missing agent install summary"
 pass "install summary output present"
 
+grep -q "council-herdr.sh" /tmp/council-install-dry-run.log || fail "install dry-run missing council-herdr.sh"
+pass "install dry-run includes council-herdr.sh"
+
 ./install.sh --dry-run --copy-configs >/tmp/council-install-dry-run-configs.log
 pass "install.sh --dry-run --copy-configs completed"
 
@@ -179,6 +206,9 @@ pass "install.sh --dry-run --codex completed"
 
 grep -q "Installed Codex skill to" /tmp/council-install-dry-run-codex.log || fail "codex dry-run output missing Codex skill summary"
 pass "Codex install summary output present"
+
+grep -q "council-herdr.sh" /tmp/council-install-dry-run-codex.log || fail "codex install dry-run missing council-herdr.sh"
+pass "codex install dry-run includes council-herdr.sh"
 
 echo
 echo "Checklist complete."

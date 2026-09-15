@@ -8,7 +8,8 @@
 - `install.sh` — installs to `~/.claude/` and optionally `~/.codex/skills/council/`
 - `configs/` — provider/model routing templates
 - `demos/` — example prompts and scoring rubric
-- `scripts/` — validation checklist
+- `scripts/` — provider detection, Herdr helper, validation checklist
+- `tests/test-council-herdr.sh` — fake-Herdr behavioral tests for `scripts/council-herdr.sh`
 
 ## Conventions
 
@@ -27,7 +28,12 @@
 - Always run `./scripts/council-simulation-checklist.sh` after changes
 - Always run `./install.sh --dry-run` to verify installation
 - When changing Codex installation, also run `./install.sh --dry-run --codex`
+- After Herdr helper changes, run `./tests/test-council-herdr.sh` twice
 - Test at least one mode (full/quick/duo) after protocol changes
+
+### Herdr
+- Claude `SKILL.md` may run external CLI seats in owned Herdr panes via `scripts/council-herdr.sh`.
+- Codex `SKILL.codex.md` stays native `spawn_agent` only — no worker panes.
 
 ### Style
 - Keep agent prompts tight — no filler sentences

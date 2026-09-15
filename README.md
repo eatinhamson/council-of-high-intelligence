@@ -217,8 +217,13 @@ The council automatically detects installed LLM providers and distributes member
 
 **Flags:**
 - `--no-auto-route` — disable auto-routing, use Claude-only defaults
-- `--dry-route` — print the routing table without running the council
+- `--dry-route` — print the routing table without running the council (never executes seats or creates panes)
 - `--models [path]` — manual override with YAML config (see `configs/provider-model-slots.example.yaml`)
+- `--no-herdr` — disable Herdr worker panes; keep the local CLI path
+- `--keep-panes` — keep successful Herdr worker panes for inspection
+- `--herdr` — force Herdr when `herdr` and `jq` are available (tests; normal Herdr sessions do not need this)
+
+When the Claude coordinator is running inside Herdr (`HERDR_ENV=1`), external CLI seats (`codex exec`, `gemini`, `ollama`) are started in owned sibling panes by `scripts/council-herdr.sh`. Native Anthropic subagents stay in-process. Completion is a result file plus an atomic sentinel — not terminal scrollback. The Codex skill does not create Herdr worker panes.
 
 ## Deliberation Protocol
 
